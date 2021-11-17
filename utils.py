@@ -63,7 +63,7 @@ def discret_uniform_distribution(n):
     u = default_rng.uniform()
     return 1 + int(u*n)
 
-def normal_distribution(mu, ro2):
+def normal_distribution(mu, sigma_square):
     u = default_rng.uniform()
     y = exp_distribution(1)
     
@@ -71,5 +71,5 @@ def normal_distribution(mu, ro2):
         ud = discret_uniform_distribution(2)
         if ud == 1:
             y*= -1
-        return y* math.sqrt(ro2) + mu
-    return normal_distribution(mu, ro2)
+        return y* math.sqrt(sigma_square) + mu
+    return normal_distribution(mu, sigma_square)
