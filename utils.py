@@ -4,26 +4,13 @@ import numpy
 from numpy.random import default_rng
 import random
 
-class PQueue(object):
-    def __init__(self):
-        self.queue = []
 
-    def push(self, obj):
-        heapq.heappush(self.queue, obj)
-
-    def pop(self):
-        return heapq.heappop(self.queue)
-
-    def count(self):
-        return len(self.queue)
-    
-    def empty(self):
-        return True if len(self.queue) == 0 else False
 class Client:
-    def __init__(self, repair_type, time):
-        self.type = repair_type
+    def __init__(self, service, time):
+        self.service = service
         self.time = time
         self.state = "Seller"
+        self.attended = ''
     
     def __le__(self, other):
         return True if self.time <= other else False
@@ -39,6 +26,31 @@ class Client:
 
     def __eq__(self, other):
         return True if self.time == other else False
+
+class PQueue(object):
+    def __init__(self):
+        self.queue = []
+        self.waiting_for_change = 0
+
+    def push(self, obj: Client):
+        if obj.service == 3:
+            self.waiting_for_change += 1
+        heapq.heappush(self.queue, obj)
+
+    def pop(self):
+        client = heapq.heappop(self.queue)
+        if client.service == 3:
+            self.waiting_for_change -= 1
+        return client
+
+    def waiting_change(self):
+        return self.waiting_for_change != 0
+
+    def count(self):
+        return len(self.queue)
+    
+    def empty(self):
+        return True if len(self.queue) == 0 else False
 
 def choose_service():
     prob = random.random()
@@ -58,6 +70,12 @@ def exp_distribution(lamb):
         return (-1/lamb)*math.log(w)
     except Exception as e:
         print(e)
+
+def poisson(lamb):
+    pass
+
+def seller_action_time():
+    pass
 
 def discret_uniform_distribution(n):
     u = default_rng.uniform()
