@@ -1,4 +1,3 @@
-import time
 from utils import *
 
 class Workshop:
@@ -24,12 +23,15 @@ class Workshop:
         self.cola = PQueue()
         
         print("opening Shop...")
-        
+    
+    def third_service(self):
+        return self.third_s or self.cola.waiting_change()
+    
     def generate_new_client(self):
         self.next_client = self.time + poisson(20)
-        next_client = Client(choose_service(), self.ta)
+        next_client = Client(choose_service(), self.next_client)
         self.cola.push(next_client)
-        return self.ta
+        return self.next_client
     
     def attend_seller(self, client):
         if self.vendedores[1] is not None and self.vendedores[2] is not None:
@@ -55,7 +57,7 @@ class Workshop:
             client.state = "Completed"
         elif service == 3:
             client.state = "Spec Tech"
-            self.third_service = True
+            self.third_s = True
         else:
             client.state = "Tech"    
         
@@ -64,13 +66,61 @@ class Workshop:
         self.cola.push(client)
 
     def attend_tech(self, client):
-        pass
+        if self.tecnicos[1] is not None and self.tecnicos[2] is not None and self.tecnicos[3] is not None:
+            if not self.third_service() and self.tecnicos_especializados[1] is None:
+                self.tecnicos_especializados[0] += 1
+                self.tecnicos_especializados[1] = client
+                self.ts1 += 1
+                self.action_spectech(client, 1)
+            else:
+                # aumentar el tiempo de espera
+                client.time += seller_action_time()
+                self.cola.push(client)
+        elif self.tecnicos[1] is None:
+            self.tecnicos[0]+=1
+            self.tecnicos[1] = client
+            self.t1 += 1
+            self.action_tech(client, 1)
+        elif self.tecnicos[2] is None:
+            self.tecnicos[0]+=1
+            self.tecnicos[2] = client
+            self.t2 += 1
+            self.action_tech(client, 2)
+        else:
+            self.tecnicos[0]+=1
+            self.tecnicos[3] = client
+            self.t3 += 1
+            self.action_tech(client, 3)
+
     def action_tech(self, client, worker):
-        pass
+        repair_time = repair_time_tech()
+        
+        client.time += repair_time
+        client.worker = worker
+        client.attended_by = "Tech"
+        client.state = "Completed"
+        self.cola.push(client)
+    
     def attend_spectech(self, client):
-        pass
+        if not self.third_service() and self.tecnicos_especializados[1] is None:
+            self.tecnicos_especializados[0] += 1
+            self.tecnicos_especializados[1] = client
+            self.ts1 += 1
+            self.action_spectech(client, 1)
+        else:
+            # aumentar el tiempo de espera
+            client.time += seller_action_time()
+            self.cola.push(client)
+    
     def action_spectech(self, client, worker):
-        pass
+        repair_time = repair_time_spec()
+        
+        client.time += repair_time
+        client.worker = worker
+        client.attended_by = "Spec Tech"
+        client.state = "Completed"
+        self.cola.push(client)
+        
     def handler(self):
         client = self.cola.pop()
         
@@ -79,3 +129,40 @@ class Workshop:
             self.client_count += 1
             self.attend_seller(client)
             self.next_client = self.generate_new_client()
+        elif client.state == "Tech":
+            self.time = client.time
+            self.attend_tech(client)
+        elif client.state == "Spec Tech":
+            self.time = client.time
+            self.attend_spectech(client)
+        elif client.state == "Completed":
+            if not self.cola.empty():
+                temp = self.cola.pop()
+                self.time = min(temp.time, client.time)
+                self.cola.push(temp)
+            else:
+                self.time = client.time
+            
+            if client.attended_by == "Seller":
+                self.vendedores[0] -= 1
+                self.vendedores[client.worker] = None
+            elif client.attended_by == "Tech":
+                self.tecnicos[0] -= 1
+                self.tecnicos[client.worker] = None
+            else:
+                self.tecnicos_especializados[0] -= 1
+                self.tecnicos_especializados[1] = None
+                self.third_s = False
+            
+            if client.service == 2:
+                self.profit += 350
+            if client.service == 3:
+                self.profit += 500
+            if client.service == 4:
+                self.profit += 750
+    def main(self):
+        self.generate_new_client()
+        while self.time < self.duration:
+            self.handler()
+        
+        return self.time, self. profit, self.client_count, self.v1, self.v2, self.t1, self.t2, self.t3, self.ts1

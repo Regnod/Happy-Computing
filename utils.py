@@ -7,10 +7,11 @@ import random
 
 class Client:
     def __init__(self, service, time):
-        self.service = service
+        self.service : int = service
         self.time = time
-        self.state = "Seller"
-        self.attended = ''
+        self.state : str = "Seller"
+        self.attended_by : str = ''
+        self.worker : int = 0
     
     def __le__(self, other):
         return True if self.time <= other else False
@@ -64,7 +65,7 @@ def choose_service():
         return 4
 
 def exp_distribution(lamb):
-    u = default_rng.uniform()
+    u = uniform(0, 1)
     w = round(u, 6)
     try:
         return (-1/lamb)*math.log(w)
@@ -72,22 +73,32 @@ def exp_distribution(lamb):
         print(e)
 
 def poisson(lamb):
-    pass
+    u = random.random()
+    cnt = 0
+    while u >= numpy.e**-lamb:
+        u = u * (random.random())
+        cnt += 1
+    return cnt
 
 def seller_action_time():
-    pass
+    return normal_distribution(5, 2)
 
-def discret_uniform_distribution(n):
-    u = default_rng.uniform()
-    return 1 + int(u*n)
+def repair_time_tech():
+    return exp_distribution(20)
+
+def repair_time_spec():
+    return exp_distribution(15)
+
+
+from random import uniform
 
 def normal_distribution(mu, sigma_square):
-    u = default_rng.uniform()
-    y = exp_distribution(1)
-    
-    if u <= math.pow(math.e(-1*math.pow(y-1, 2))/2):
-        ud = discret_uniform_distribution(2)
-        if ud == 1:
-            y*= -1
-        return y* math.sqrt(sigma_square) + mu
-    return normal_distribution(mu, sigma_square)
+    u = uniform(0, 1)
+    y1 = 0
+    y2 = 0
+    while y2 - (((y1-1)**2)/2) <= 0:
+        y1 = exp_distribution(1)
+        y2 = exp_distribution(1)
+    u = uniform(0, 1)
+    ans = y1 if u > 0.5 else -y1
+    return ans* math.sqrt(sigma_square) + mu
