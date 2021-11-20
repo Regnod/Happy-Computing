@@ -8,12 +8,12 @@ class Workshop:
         self.profit = 0 # dinero ganado hasta el momento
         self.third_s = False 
         
-        self.v1  = 0 # clientes atendidos por el vendedor 1
-        self.v2  = 0 # clientes atendidos por el vendedor 2
-        self.t1  = 0 # clientes atendidos por el técnico 1
-        self.t2  = 0 # clientes atendidos por el técnico 2
-        self.t3  = 0 # clientes atendidos por el técnico 3
-        self.ts1 = 0 # clientes atendidos por el técnico especializado 1
+        self.v1  = [0] # clientes atendidos por el vendedor 1
+        self.v2  = [0] # clientes atendidos por el vendedor 2
+        self.t1  = [0] # clientes atendidos por el técnico 1
+        self.t2  = [0] # clientes atendidos por el técnico 2
+        self.t3  = [0] # clientes atendidos por el técnico 3
+        self.ts1 = [0] # clientes atendidos por el técnico especializado 1
         
         self.arrivals = []
         self.exits = []
@@ -50,22 +50,22 @@ class Workshop:
             if u < 0.5:
                 self.vendedores[0]+=1
                 self.vendedores[1] = client
-                self.v1 += 1
+                self.v1[0] += 1
                 client.worker = 1
             else:
                 self.vendedores[0]+=1
                 self.vendedores[2] = client
-                self.v2 += 1
+                self.v2[0] += 1
                 client.worker = 2
         elif self.vendedores[1] is None:
             self.vendedores[0]+=1
             self.vendedores[1] = client
-            self.v1 += 1
+            self.v1[0] += 1
             client.worker = 1
         else:
             self.vendedores[0]+=1
             self.vendedores[2] = client
-            self.v2 += 1
+            self.v2[0] += 1
             client.worker = 2
         self.action_seller(client, client.worker)
 
@@ -90,7 +90,7 @@ class Workshop:
             if not self.third_service() and self.tecnicos_especializados[1] is None:
                 self.tecnicos_especializados[0] += 1
                 self.tecnicos_especializados[1] = client
-                self.ts1 += 1
+                self.ts1[0] += 1
                 self.action_spectech(client, 1)
             else:
                 # aumentar el tiempo de espera
@@ -99,17 +99,17 @@ class Workshop:
         elif self.tecnicos[1] is None:
             self.tecnicos[0]+=1
             self.tecnicos[1] = client
-            self.t1 += 1
+            self.t1[0] += 1
             self.action_tech(client, 1)
         elif self.tecnicos[2] is None:
             self.tecnicos[0]+=1
             self.tecnicos[2] = client
-            self.t2 += 1
+            self.t2[0] += 1
             self.action_tech(client, 2)
         else:
             self.tecnicos[0]+=1
             self.tecnicos[3] = client
-            self.t3 += 1
+            self.t3[0] += 1
             self.action_tech(client, 3)
 
     def action_tech(self, client, worker):
@@ -125,7 +125,7 @@ class Workshop:
         if self.tecnicos_especializados[1] is None:
             self.tecnicos_especializados[0] += 1
             self.tecnicos_especializados[1] = client
-            self.ts1 += 1
+            self.ts1[0] += 1
             self.action_spectech(client, 1)
         else:
             # aumentar el tiempo de espera
@@ -140,7 +140,28 @@ class Workshop:
         client.attended_by = "Spec Tech"
         client.state = "Completed"
         self.cola.push(client)
-        
+    
+    def check(self, client):
+        client.exit_time = client.time
+        self.exits.append(client.time)
+        self.client_count += 1
+        att = client.attended_by
+        worker = client.worker
+        if att == "Seller":
+            if worker == 1:
+                self.v1.append((client.arrival_time, client.exit_time))
+            else:
+                self.v2.append((client.arrival_time, client.exit_time))
+        elif att == "Tech":
+            if worker == 1:
+                self.t1.append((client.arrival_time, client.exit_time))
+            elif worker == 2:
+                self.t2.append((client.arrival_time, client.exit_time))
+            else:
+                self.t2.append((client.arrival_time, client.exit_time))
+        else:
+            self.ts1.append((client.arrival_time, client.exit_time))
+    
     def handler(self):
         try:
             client = self.cola.pop()
@@ -173,9 +194,8 @@ class Workshop:
                 self.tecnicos_especializados[0] -= 1
                 self.tecnicos_especializados[1] = None
                 self.third_s = False
-            
-            self.exits.append(client.time)
-            self.client_count += 1
+                
+            self.check(client)
             if client.service == 2:
                 self.profit += 350
             if client.service == 3:

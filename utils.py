@@ -12,7 +12,7 @@ class Client:
         self.exit_time = time
         self.time = time
         self.state : str = "Seller"
-        self.attended_by : str = ''
+        self.attended_by : str = 'Seller'
         self.worker : int = 0
     
     def __le__(self, other):
@@ -99,11 +99,6 @@ def poisson(lamb):
 
 def seller_action_time():
     return normal_distribution(5,2)
-    u1 = random.random()
-    u2 = random.random()
-    z = math.sqrt(-2. * math.log(u1)) * math.cos(2. * math.pi * u2)
-    return z * math.sqrt(2) + 5
-
 
 def repair_time_tech():
     u = uniform(0, 1)
