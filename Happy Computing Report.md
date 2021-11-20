@@ -2,7 +2,7 @@
 
 Richard García De la Osa C412
 
-
+Git link: https://github.com/Regnod/Happy-Computing/tree/master.
 
 Happy Computing es un taller de reparaciones electrónicas, donde se realizan las siguientes actividades:
 
@@ -97,6 +97,16 @@ El método **attend_seller(client)** asigna el cliente a un vendedor, y este usa
 ### Sobre las distribuciones de variables aleatorias utilizadas:
 
 En este problema utilizé 3 tipos de variables aleatorias, la **normal**, la **exponencial** y la **poisson**. 
+
+```python
+def poisson(lamb):
+    u = random.random()
+    cnt = 0
+    while u >= numpy.e**-lamb:
+        u = u * (random.random())
+        cnt += 1
+    return cnt
+```
 
 
 
