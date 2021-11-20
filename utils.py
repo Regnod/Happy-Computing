@@ -1,13 +1,15 @@
 import heapq
 import math
 import numpy
-from numpy.random import default_rng
 import random
+from random import uniform
 
 
 class Client:
     def __init__(self, service, time):
         self.service : int = service
+        self.arrival_time = time
+        self.exit_time = time
         self.time = time
         self.state : str = "Seller"
         self.attended_by : str = ''
@@ -55,23 +57,37 @@ class PQueue(object):
 
 def choose_service():
     prob = random.random()
-    if prob < 0.45:
+    if prob <= 0.45:
         return 1
-    elif 0.45 < prob < 0.70:
+    elif 0.45 < prob <= 0.70:
         return 2
-    elif 0.70 < prob < 0.80:
+    elif 0.70 < prob <= 0.80:
         return 3
-    elif 0.80 < prob < 1:
+    elif 0.80 < prob <= 1:
         return 4
+    
+def testing():
+    profit = 0
+    for _ in range(24):
+        s = choose_service()
+        if s == 2:
+            profit += 350
+        if s == 3:
+            profit += 500
+        if s == 4:
+            profit += 750
+    return profit
+
+# profit = 0
+# for _ in range(10000):
+#     profit += testing()
+
+# print(profit/10000)
 
 def exp_distribution(lamb):
     u = uniform(0, 1)
-    w = round(u, 6)
-    try:
-        return (-1/lamb)*math.log(w)
-    except Exception as e:
-        print(e)
-
+    return (-math.log( u)) / (lamb)
+    
 def poisson(lamb):
     u = random.random()
     cnt = 0
@@ -80,17 +96,22 @@ def poisson(lamb):
         cnt += 1
     return cnt
 
+
 def seller_action_time():
-    return normal_distribution(5, 2)
+    return normal_distribution(5,2)
+    u1 = random.random()
+    u2 = random.random()
+    z = math.sqrt(-2. * math.log(u1)) * math.cos(2. * math.pi * u2)
+    return z * math.sqrt(2) + 5
+
 
 def repair_time_tech():
-    return exp_distribution(20)
+    u = uniform(0, 1)
+    return (-math.log( u)) / (1/20)
 
 def repair_time_spec():
-    return exp_distribution(15)
-
-
-from random import uniform
+    u = uniform(0, 1)
+    return (-math.log( u)) / (1/15)
 
 def normal_distribution(mu, sigma_square):
     u = uniform(0, 1)
