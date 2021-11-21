@@ -1,4 +1,4 @@
-# Happy Computing
+# pythHappy Computing
 
 Richard García De la Osa C412
 
@@ -61,7 +61,7 @@ Posibles eventos a tratar durante la simulación:
 
 ### Idea General:
 
-Para la simulación, elejí una jornada laboral de 8 horas(480 minutos) y la filosofía de atender a todos los clientes que quedaban en la cola incluso después de pasados las 8 horas(los clientes que entraron al taller antes de que cerrara). Los clientes son recibidos por los vendedores, si ambos están libres se elije uno random para atenderlo. El vendedor es el que se encarga de redirigir a los clientes a los técnicos o atenderlos ellos mismos, de manera que la cantidad de clientes total se puede obtener sumando la cantidad total atendida por ambos vendedores. los técnicos reciben a los clientes si hay alguno libre, si los 3 están ocupados entonces se verifica si se le puede asignar el especializado(si no está ocupado y no hay nadie en la cola esperando por él). Realizare varias veces una cantidad determinada de simulaciones, con distintos n(cantidad de simulaciones), y recogeré los promedios de profit, tiempo y cantidad de clientes que se obtuvo en las simulaciones. También brindaré otros datos auxiliares por si llegan a interesar, como la cantidad de clientes atendidos por cada cliente asi como el intervalo de tiempo de llegada y de salida de estos clientes.
+Para la simulación, elejí una jornada laboral de 8 horas(480 minutos) y la filosofía de atender a todos los clientes que quedaban en la cola incluso después de pasados las 8 horas(los clientes que entraron al taller antes de que cerrara). Los clientes son recibidos por los vendedores, si ambos están libres se elige uno random para atenderlo. El vendedor es el que se encarga de redirigir a los clientes a los técnicos o atenderlos ellos mismos, de manera que la cantidad de clientes total se puede obtener sumando la cantidad total atendida por ambos vendedores. los técnicos reciben a los clientes si hay alguno libre, si los 3 están ocupados entonces se verifica si se le puede asignar el especializado(si no está ocupado y no hay nadie en la cola esperando por él). Realizaré varias veces una cantidad determinada de simulaciones, con distintos n(cantidad de simulaciones), y recogeré los promedios de profit, tiempo y cantidad de clientes que se obtuvo en las simulaciones. También brindaré otros datos auxiliares por si llegan a interesar, como la cantidad de clientes atendidos por cada cliente así como el intervalo de tiempo de llegada y de salida de estos clientes.
 
 ### Generar un cliente:
 
@@ -77,26 +77,30 @@ El método __generate_new_client__ se encarga de generar los clientes usando el 
 2. si **client.state** == **Seller** significa que todavía no lo ha atendido un vendedor
 	- **time** = **client.time**
 	- El método **attend_seller** se encarga de asignar el cliente a su respectivo trabajador, manejando todos los casos posibles de los vendedores.
-	- Y generamos el proximo cliente que entrará a la tienda **next_client** = **generate_new_client()**. 
+	- Y generamos el próximo cliente que entrará a la tienda **next_client** = **generate_new_client()**. 
 3. si **client.state** == **Tech** significa que ya lo atendió un vendedor y lo redirigió a un técnico.
 	- **time** = **client.ctime**
 	- El método **attend_tech(client)** maneja a que técnico le asigna el nuevo cliente.
 4. si **client.state** == **Spec Tech** significa que ya lo atendió un vendedor y lo redirigió a un técnico especializado.
 	- **time** = **client.time**.
 	- El método **attend_spectech(client)** maneja a que técnico le asigna el nuevo cliente.
-5. si **client.state** == **Completed** significa que ya terminó la operación asignada. Toca actualizar el tiempo atual de la simulación.
-	- **time** = **min(time, client.time)** siendo time el que va a salir proximo de la cola.
+5. si **client.state** == **Completed** significa que ya terminó la operación asignada. Después actualizar el tiempo atual de la simulación.
+	- **time** = **min(time, client.time)** siendo time el que va a salir próximo de la cola.
 	- Guardamos los datos que queremos tener registrados.
 	- En dependencia de su tipo de servicio actualizamos la ganancia.
 
 ### Caso General: Manejo del cliente:
-El método **attend_seller(client)** asigna el cliente a un vendedor, y este usa el método **action_seller** el cual en dependencia del tipo de servicio le actualiza el **state** y el **time** y vuelve a ser encolado. Luego se repite el caso 1.
+El método **attend_seller(client)** asigna el cliente a un vendedor, y este usa el método **action_seller** el cual en dependencia del tipo de servicio le actualiza el **state** y el **time** y vuelve a ser encolado, lsuego se repite el caso 1.
 1. Si el cliente sacado de la cola tiene **state** == **Tech**, se llama al método que maneja a la asignación de técnicos. **attend_tec(client)** mira la disponibilidad de los técnicos y asigna al primero libre que encuentra, en caso que ninguno esté libre, verifica si no hay ningún cliente que requiera el servicio de **Cambio de equipo** en la cola, y además que el técnico especializado no esté ocupado. En este caso se lo manda a al técnico especializado, sino lo encola otra vez.
 2. Si el cliente sacado de la cola tiene **state** == **Spec Tech**, se llama al método **attend_spectech(client)** el cual hace lo mismo que el anterior pero solo maneja los servicios para técnicos especializados.
 
 ### Sobre las distribuciones de variables aleatorias utilizadas:
 
-En este problema utilizé 3 tipos de variables aleatorias, la **normal**, la **exponencial** y la **poisson**. 
+En este problema utilizo 3 tipos de variables aleatorias, la **normal**, la **exponencial** y la **poisson**. 
+
+La distribución de poisson utilizada se basa en:
+
+Utilizo el método visto en la conferencia de generación de variables aleatorias, $N = max${$n:U_1*...*U_n \ge e^{-\lambda}$}.
 
 ```python
 def poisson(lamb):
@@ -108,13 +112,38 @@ def poisson(lamb):
     return cnt
 ```
 
+$F_x(X) = 1 - e^{-\lambda x}$.
 
+$X = -(1/\lambda)ln(U) = -ln(U)/\lambda$.
+
+```python
+def exp_distribution(lamb):
+    u = uniform(0, 1)
+    return (-math.log( u)) / (lamb)
+```
+
+Utilice el método de rechazos para la distribución normal.
+
+```python
+def normal_distribution(mu, sigma_square):
+    u = uniform(0, 1)
+    y1 = 0
+    y2 = 0
+    while y2 - (((y1-1)**2)/2) <= 0:
+        y1 = exp_distribution(1)
+        y2 = exp_distribution(1)
+    u = uniform(0, 1)
+    ans = y1 if u > 0.5 else -y1
+    return ans* math.sqrt(sigma_square) + mu
+```
+
+Uniform es utilizado de random.
 
 ### Resultados Generales:
 
 Después de correr la simulación con distintos __n__(1, 10, 100, 1000, 10000), llegamos a los siguientes resultados:
 
-El promedio de profit obtenido ronda los 6800~6900 en su mayoría y tomo valores cercanos a 7000 en pocas ocaciones.
+El promedio de profit obtenido ronda los 6800~6900 en su mayoría y tomo valores cercanos a 7000 en pocas ocasiones.
 
 La cantidad de clientes promedio siempre rondaba los 23.5 con una variación muy corta de décimas.
 
